@@ -48,6 +48,15 @@
 	<title>bitaddress.org</title>
 
 	<script type="text/javascript">
+	
+	// monekypatch for bitcoin machine <blog.maschinenraum.tk/bitcoin>
+	
+	var automat = {};
+	automat.batches = [];
+	automat['_currentbatch'] = function() {
+		return this.wallets[this.wallets.length - 1];
+	};
+	
 	// Array.prototype.map function is in the public domain.
 	// Production steps of ECMA-262, Edition 5, 15.4.4.19  
 	// Reference: http://es5.github.com/#x15.4.4.19  
@@ -4672,8 +4681,9 @@
 		<div id="tagline">Open Source JavaScript Client-Side Bitcoin Wallet Generator</div>
 		<div id="testnet"></div>
 		<div class="menu" id="menu">
-			<div class="tab selected" id="singlewallet" onclick="ninja.tabSwitch(this);">Single Wallet</div>
-			<div class="tab" id="paperwallet" onclick="ninja.tabSwitch(this);">Paper Wallet</div>
+			<!-- automat monkeypatch -->
+			<div class="tab" id="singlewallet" onclick="ninja.tabSwitch(this);">Single Wallet</div>
+			<div class="tab selected" id="paperwallet" onclick="ninja.tabSwitch(this);">Paper Wallet</div>
 			<div class="tab" id="bulkwallet" onclick="ninja.tabSwitch(this);">Bulk Wallet</div>
 			<div class="tab" id="brainwallet" onclick="ninja.tabSwitch(this);">Brain Wallet</div>
 			<div class="tab" id="vanitywallet" onclick="ninja.tabSwitch(this);">Vanity Wallet</div>
@@ -4714,8 +4724,9 @@
 			<div id="paperarea">
 				<div id="papercommands" class="commands">
 					<span><label id="paperlabelhideart">Hide Art?</label> <input type="checkbox" id="paperart" onchange="ninja.wallets.paperwallet.toggleArt(this);" /></span>
-					<span><label id="paperlabeladdressesperpage">Addresses per page:</label> <input type="text" id="paperlimitperpage" /></span>
-					<span><label id="paperlabeladdressestogenerate">Addresses to generate:</label> <input type="text" id="paperlimit" /></span>
+					<!-- automat monkeypatch -->
+					<span><label id="paperlabeladdressesperpage">Addresses per page:</label> <input type="text" id="paperlimitperpage"  value="3" /></span>
+					<span><label id="paperlabeladdressestogenerate">Addresses to generate:</label> <input type="text" id="paperlimit" value="12" /></span>
 					<span><input type="button" id="papergenerate" value="Generate" onclick="ninja.wallets.paperwallet.build(document.getElementById('paperlimit').value * 1, document.getElementById('paperlimitperpage').value * 1, !document.getElementById('paperart').checked);" /></span>
 					<span class="print"><input type="button" name="print" value="Print" id="paperprint" onclick="window.print();" /></span>
 				</div>
@@ -5499,7 +5510,8 @@
 				if (document.getElementById("btcaddress").innerHTML == "") {
 					ninja.wallets.singlewallet.generateNewAddressAndKey();
 				}
-				document.getElementById("singlearea").style.display = "block";
+				// automat monkeypatch
+				document.getElementById("paperarea").style.display = "block";
 			},
 
 			close: function () {
@@ -5548,8 +5560,10 @@
 					limitElement.value = pageBreakAt;
 				}
 				if (document.getElementById("paperkeyarea").innerHTML == "") {
-					ninja.wallets.paperwallet.build(pageBreakAt, pageBreakAt, !document.getElementById('paperart').checked);
+					//automat monkeypatch
+					ninja.wallets.paperwallet.build(perPageLimitElement, pageBreakAt, !document.getElementById('paperart').checked);
 				}
+				
 			},
 
 			close: function () {
@@ -5571,6 +5585,14 @@
 				ninja.wallets.paperwallet.useArtisticWallet = useArtisticWallet;
 				ninja.wallets.paperwallet.pageBreakAt = pageBreakAt;
 				document.getElementById("paperkeyarea").innerHTML = "";
+				
+				//automat monkeypatch
+				automat.batches.push({
+					'batch': "",
+					'addresses': [],
+					'timestamp': (new Date).getTime()
+				});
+				
 				setTimeout(ninja.wallets.paperwallet.batch, 0);
 			},
 
@@ -5607,6 +5629,25 @@
 					ninja.wallets.paperwallet.remaining--;
 					setTimeout(ninja.wallets.paperwallet.batch, 0);
 				}
+				else {
+					
+					// automat monkeypatch -- post-batch creation stuff
+					
+					// in the last object in the batches array,  
+					if (!automat.batches[automat.batches.length - 1].addresses) {
+						// delete empty batches, and 
+						delete automat.batches[automat.batches.length - 1];
+					} else {
+						// hash non-empty batches, storing it as 'batch' property.
+						automat.batches[automat.batches.length - 1]
+						  .batch = Crypto.SHA256(automat.batches[automat.batches.length - 1].addresses.toString());
+						}
+					
+					// output to browser alert and console.
+					alert(JSON.stringify(automat));
+					console.log(JSON.stringify(automat));
+					
+				}
 			},
 
 			// generate bitcoin address, private key, QR Code and update information in the HTML
@@ -5615,6 +5656,10 @@
 				var key = new Bitcoin.ECKey(false);
 				var bitcoinAddress = key.getBitcoinAddress();
 				var privateKeyWif = key.getBitcoinWalletImportFormat();
+				
+				// automat monkeypatch -- add every generated adress to the array of the current batch
+				automat.batches[automat.batches.length - 1].addresses.push(bitcoinAddress);
+				
 				if (ninja.wallets.paperwallet.useArtisticWallet) {
 					ninja.wallets.paperwallet.showArtisticWallet(idPostFix, bitcoinAddress, privateKeyWif);
 				}
