@@ -6551,5 +6551,38 @@
 		// if users does not move mouse after random amount of time then generate the key anyway.
 		setTimeout(ninja.seeder.forceGenerate, ninja.seeder.seedLimit * 20);
 	</script>
+  <script type="text/javascript" charset="utf-8">
+  var txt = [
+    '******************************************************',
+    'bitadress.org - bitcoin vending machine monkey patches',
+    '',
+    'to make 1 costum wallet, use this:',
+    'makeCustomWallet = function ("privatekey", "publicaddress")',
+    '******************************************************'    
+  ];
+  txt.forEach(function (line) {
+    console.log(line);
+  });
+  
+  // build 1 paperwallet on startup
+  ninja.wallets.paperwallet.build(
+    1, // paperlimit
+    1, // paperlimitperpage
+    true // show art
+  );
+  
+  window.makeCustomWallet = function (privatek, publica) {
+    
+    var keypair = {
+      "qrcode_private1": privatek,
+      "qrcode_public1": publica
+    };
+    ninja.qrCode.showQrCode(keypair, 2.5);
+    
+		document.getElementById("btcaddress1").innerHTML = publica;
+		document.getElementById("btcprivwif1").innerHTML = privatek;
+    
+  }
+  </script>
 </body>
 </html>
