@@ -6557,7 +6557,10 @@
     'bitadress.org - bitcoin vending machine monkey patches',
     '',
     'to make 1 costum wallet, use this:',
-    'makeCustomWallet = function ("privatekey", "publicaddress")',
+    'makeCustomWallet = function ("privatekey", "publicaddress");',
+    'to hide background art, not layout, use:',
+    'window.hideart();',
+    '',
     '******************************************************'    
   ];
   txt.forEach(function (line) {
@@ -6571,6 +6574,10 @@
     true // show art
   );
   
+  window.hideart = function () {
+    document.body.className = 'hideart';
+  };
+  
   window.makeCustomWallet = function (privatek, publica) {
     
     var keypair = {
@@ -6582,7 +6589,12 @@
 		document.getElementById("btcaddress1").innerHTML = publica;
 		document.getElementById("btcprivwif1").innerHTML = privatek;
     
-  }
+  };
   </script>
+  <style type="text/css" media="screen">
+  body.hideart #paperarea .artwallet .papersvg {
+    opacity: 0;
+  }
+  </style>
 </body>
 </html>
